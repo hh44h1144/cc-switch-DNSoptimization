@@ -1,0 +1,8 @@
+CloudflareSpeedTest bundled by CC Switch
+
+Source project: https://github.com/XIU2/CloudflareSpeedTest
+Pinned source revision: 1da0c02
+License: GNU GPL v3 (see LICENSE)
+
+The executable is built from the pinned source without CC Switch-specific
+changes and is invoked with its default command-line parameters.

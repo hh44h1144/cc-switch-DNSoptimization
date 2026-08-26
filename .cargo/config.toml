@@ -1,0 +1,9 @@
+# 使用 rsproxy 的 Cargo 稀疏索引镜像，避免构建时依赖 crates.io 网络。
+[source.crates-io]
+replace-with = "rsproxy"
+
+[source.rsproxy]
+registry = "sparse+https://rsproxy.cn/index/"
+
+[net]
+git-fetch-with-cli = true
