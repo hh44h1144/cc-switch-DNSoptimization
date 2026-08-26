@@ -86,6 +86,38 @@ tar -tzf 'src-tauri/target/release/bundle/macos/CC Switch.app.tar.gz' | grep 'Co
 
 Tauri 自动生成的 `bundle_dmg.sh` 在无 Finder/图形环境时可能失败；这不等于 `.app` 或 CFST 资源缺失。需要交付 DMG 时，可使用 `hdiutil create -srcfolder` 生成简单 DMG，再只读挂载确认 CFST 文件存在。
 
+## Windows 构建与绿色版打包
+
+Windows 原生构建建议在 Windows 10/11 x64 或 ARM64 环境执行，不建议在 macOS 上直接交叉编译发布 Windows 程序。准备以下依赖：Node.js 20、pnpm、Rust MSVC toolchain、Visual Studio 2022 Build Tools（Desktop C++ 与 Windows SDK）、WebView2 Runtime；若生成 MSI，还需要 WiX Toolset。
+
+在 Windows PowerShell 中：
+
+```powershell
+pnpm install --frozen-lockfile
+pnpm run typecheck
+pnpm run build:renderer
+cargo check --manifest-path src-tauri/Cargo.toml
+
+# 生成完整安装包（MSI/NSIS 等由 tauri.conf.json 决定）
+pnpm tauri build
+```
+
+如果只需要可运行的绿色版，不需要 MSI，可直接使用 Release 目录中的 `cc-switch.exe`，并将 CFST 资源目录放在 exe 旁边：
+
+```text
+CC-Switch-Windows-x64/
+├── cc-switch.exe
+└── resources/
+    └── cfst/
+        ├── ip.txt
+        ├── windows-amd64/cfst.exe
+        └── ...
+```
+
+对应文件通常位于 `src-tauri/target/release/cc-switch.exe`；ARM64 构建位于 `src-tauri/target/aarch64-pc-windows-msvc/release/cc-switch.exe`，并使用 `windows-arm64/cfst.exe`。复制整个 `src-tauri/resources/cfst/` 目录，不能只复制 exe，否则运行时 CFST 扫描会失败。打包后应检查 exe 和 `resources/cfst/ip.txt`、目标架构 CFST 文件均存在，并在隔离目录启动验证。
+
+macOS 上如仅作临时测试，可尝试安装 `cargo-xwin` 并针对 `x86_64-pc-windows-msvc` 交叉编译，但 Windows SDK、原生依赖和签名兼容性可能导致失败；正式发布优先使用 Windows CI runner。项目的 `.github/workflows/release.yml` 已包含 Windows x64/ARM64 构建及 Portable ZIP 生成流程。
+
 ## 修改约束
 
 - 先追踪真实调用链，再修改共享层；不要臆造参数或增加没有调用方的兼容逻辑。
@@ -94,4 +126,3 @@ Tauri 自动生成的 `bundle_dmg.sh` 在无 Finder/图形环境时可能失败�
 - 不要停止、杀掉或重启用户现有的 `127.0.0.1:15721` 实例；验证新客户端时使用其他端口和隔离配置目录。
 - 保留工作区中已有的用户修改，不使用破坏性的 `git reset --hard` 或大范围清理。
 - 完成功能后运行与改动风险匹配的检查，并在交付说明中明确实际验证结果和未解决的环境问题。
-
